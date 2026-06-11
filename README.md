@@ -51,15 +51,29 @@ scrape_configs:
       - targets: ["localhost:5000"]
 ```
 
+## Docker
+
+```bash
+# 一键构建并运行（自动 build → rm 旧容器 → run 新容器）
+bin/docker-manage.sh
+
+# 或指定端口
+PORT=8080 bin/docker-manage.sh
+```
+
 ## 项目结构
 
 ```
-├── flask-metrics-venv/   # Python 虚拟环境
-├── .claude/              # Claude Code 配置
-├── .gitignore            # Git 忽略规则
-├── app.py                # Flask 应用主程序
-├── quicksort.py          # 快速排序脚本
-├── CLAUDE.md             # Claude Code 指引
+├── bin/
+│   └── docker-manage.sh   # Docker 构建 & 运行脚本
+├── flask-metrics-venv/    # Python 虚拟环境
+├── .claude/               # Claude Code 配置
+├── .gitignore             # Git 忽略规则
+├── Dockerfile             # Docker 镜像定义
+├── .dockerignore          # Docker 构建忽略
+├── app.py                 # Flask 应用主程序
+├── quicksort.py           # 快速排序脚本
+├── CLAUDE.md              # Claude Code 指引
 └── README.md
 ```
 

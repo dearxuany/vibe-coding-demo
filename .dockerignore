@@ -1,0 +1,5 @@
+flask-metrics-venv/
+.git/
+__pycache__/
+*.pyc
+.claude/
