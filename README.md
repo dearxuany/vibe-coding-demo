@@ -53,6 +53,7 @@ scrape_configs:
 ## Docker
 
 ```bash
+# 一键构建并运行（自动 build → rm 旧容器 → run 新容器）
 bin/docker-manage.sh
 ```
 
