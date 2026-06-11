@@ -55,9 +55,11 @@ scrape_configs:
 
 ```
 ├── flask-metrics-venv/   # Python 虚拟环境
+├── .claude/              # Claude Code 配置
+├── .gitignore            # Git 忽略规则
 ├── app.py                # Flask 应用主程序
 ├── quicksort.py          # 快速排序脚本
-├── test.txt              # 测试文件
+├── CLAUDE.md             # Claude Code 指引
 └── README.md
 ```
 
@@ -66,3 +68,26 @@ scrape_configs:
 - Python ≥ 3.10
 - Flask 3.1
 - prometheus-client 0.25
+
+---
+
+> **推送到 GitHub**
+>
+> GitHub 已不再支持密码认证，需使用 Fine-grained Personal Access Token 登录。
+>
+> 1. 打开 [github.com/settings/tokens](https://github.com/settings/tokens?type=beta)，点击 **Generate new token**
+> 2. **Repository access**: 选择 **"Only select repositories"**，勾选目标仓库
+> 3. **Permissions** → **Repository permissions**，只设一项：
+>
+>    | 权限 | 级别 |
+>    |------|------|
+>    | Contents | Read and write |
+>
+> 4. 生成后复制 token（仅显示一次），然后执行：
+>
+>    ```bash
+>    git remote set-url origin https://<你的用户名>:<token>@github.com/<用户名>/<仓库名>.git
+>    git push -u origin main
+>    ```
+>
+> ⚠️ token 会明文保存在 `.git/config` 中，注意不要提交或分享该文件。
