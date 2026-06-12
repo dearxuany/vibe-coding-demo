@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% block title %}新建文档 - Markdown Docs{% endblock %}
+{% block content %}
+<h1 class="mb-3">➕ 新建文档{% if subdir %} <small class="text-muted">/ {{ subdir }}</small>{% endif %}</h1>
+
+<form method="POST">
+    <div class="mb-3">
+        <label for="filename" class="form-label">文件名</label>
+        <input type="text" name="filename" id="filename" class="form-control" placeholder="例如：my-doc" required autofocus>
+        <div class="form-text">不需要输入 .md 后缀，会自动添加。将创建在{% if subdir %}<code>{{ subdir }}/</code>{% else %}根目录{% endif %}下。</div>
+    </div>
+    <div class="mb-3">
+        <label for="tags" class="form-label">标签（可选）</label>
+        <input type="text" name="tags" id="tags" class="form-control" placeholder="例如：python, 教程, 入门（逗号分隔）">
+    </div>
+    <div class="mb-3">
+        <label for="content" class="form-label">内容（Markdown）</label>
+        <textarea name="content" id="content" class="form-control font-monospace" rows="20" style="resize: vertical;" placeholder="# 文档标题&#10;&#10;开始编写你的内容..."></textarea>
+    </div>
+    <div class="d-flex gap-2">
+        <button type="submit" class="btn btn-success">💾 创建</button>
+        <a href="/docs{% if subdir %}?dir={{ subdir }}{% endif %}" class="btn btn-secondary">取消</a>
+    </div>
+</form>
+{% endblock %}

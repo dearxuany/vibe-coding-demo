@@ -1,0 +1,4 @@
+flask>=3.0
+prometheus-client>=0.19
+flask-login>=0.6
+mistune>=3.0

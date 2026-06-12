@@ -16,7 +16,9 @@ docker rm "$CONTAINER" 2>/dev/null || true
 
 # Run
 echo ">>> Starting container: $CONTAINER on port $PORT ..."
-docker run -d --name "$CONTAINER" -p "$PORT:5000" "$IMAGE"
+docker run -d --name "$CONTAINER" -p "$PORT:5000" \
+    -v "$(dirname "$0")/../docs:/app/docs" \
+    "$IMAGE"
 
 echo ">>> Done."
 docker ps --filter "name=$CONTAINER" --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"

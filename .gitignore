@@ -1,3 +1,4 @@
 flask-metrics-venv/
 __pycache__/
 *.pyc
+docs/.tags.json

@@ -3,10 +3,14 @@ FROM python:3.10-slim
 WORKDIR /app
 
 # Install dependencies
-RUN pip install --no-cache-dir flask prometheus-client
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy application code
 COPY app.py .
+COPY templates/ ./templates/
+COPY docs/ ./docs/
+COPY static/ ./static/
 
 # Expose default port
 EXPOSE 5000

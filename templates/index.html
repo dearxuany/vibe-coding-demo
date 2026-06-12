@@ -1,0 +1,272 @@
+{% extends "base.html" %}
+{% block title %}文档列表 - Markdown Docs{% endblock %}
+{% block extra_head %}
+<style>
+    .docs-layout { display: flex; gap: 0; min-height: calc(100vh - 120px); }
+    .docs-sidebar {
+        width: 340px; min-width: 340px;
+        border-right: 1px solid #dee2e6;
+        background: #f8f9fa;
+        overflow-y: auto;
+        padding: 1rem;
+    }
+    .docs-preview {
+        flex: 1;
+        overflow-y: auto;
+        padding: 2rem;
+        background: #fff;
+    }
+    .tag-badge {
+        display: inline-block; padding: 2px 10px; border-radius: 12px;
+        font-size: 0.75rem; background: #e9ecef; color: #495057;
+        text-decoration: none; margin: 0 2px 4px 0; cursor: pointer;
+        transition: background 0.15s;
+    }
+    .tag-badge:hover { background: #dee2e6; }
+    .tag-badge.active { background: #0d6efd; color: #fff; }
+    .dir-item {
+        display: flex; align-items: center; padding: 6px 10px; border-radius: 4px;
+        text-decoration: none; color: #495057; font-size: 0.85rem;
+        transition: background 0.15s;
+    }
+    .dir-item:hover { background: #e9ecef; }
+    .dir-item .badge { margin-left: auto; }
+    .doc-item {
+        display: block; padding: 8px 12px; border-radius: 6px;
+        text-decoration: none; color: #212529; margin-bottom: 2px;
+        border: 1px solid transparent; font-size: 0.85rem;
+        position: relative;
+    }
+    .doc-item:hover { background: #e9ecef; }
+    .doc-item.active { background: #fff; border-color: #0d6efd; box-shadow: 0 0 0 1px #0d6efd; }
+    .doc-item .doc-title { font-weight: 500; display: block; }
+    .doc-item .doc-meta { font-size: 0.75rem; color: #6c757d; }
+    .doc-item .doc-filename { font-size: 0.7rem; color: #adb5bd; }
+    .doc-item .doc-tags { margin-top: 2px; }
+    .doc-item .doc-tags .mini-tag { font-size: 0.65rem; background: #e7f1ff; color: #0d6efd; padding: 1px 6px; border-radius: 8px; margin-right: 2px; }
+    .move-form { display: none; }
+    .move-form.show { display: block; }
+    .preview-empty { display: flex; align-items: center; justify-content: center; height: 100%; color: #adb5bd; flex-direction: column; }
+    .preview-empty .icon { font-size: 4rem; margin-bottom: 1rem; }
+    .breadcrumb-bar { font-size: 0.85rem; margin-bottom: 0.5rem; }
+    .breadcrumb-bar a { text-decoration: none; color: #0d6efd; }
+    .action-btns .btn { font-size: 0.7rem; padding: 1px 6px; }
+    @media (max-width: 768px) {
+        .docs-layout { flex-direction: column; }
+        .docs-sidebar { width: 100%; min-width: auto; max-height: 40vh; border-right: none; border-bottom: 1px solid #dee2e6; }
+        .docs-preview { padding: 1rem; }
+    }
+</style>
+{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <div>
+        <h1 class="mb-0">📚 文档列表</h1>
+        {% if current_dir %}
+        <div class="breadcrumb-bar mt-1">
+            <a href="/docs">📁 根目录</a>
+            {% set parts = current_dir.split('/') %}
+            {% for i in range(parts|length) %}
+            / <a href="/docs?dir={{ '/'.join(parts[:i+1]) }}">{{ parts[i] }}</a>
+            {% endfor %}
+        </div>
+        {% endif %}
+    </div>
+    <div class="d-flex gap-1">
+        {% if current_user.is_authenticated %}
+        <button class="btn btn-outline-secondary btn-sm" onclick="document.getElementById('mkdir-form').classList.toggle('show')">📁 新建目录</button>
+        <a href="/docs/new{% if current_dir %}?dir={{ current_dir }}{% endif %}" class="btn btn-success btn-sm">➕ 新建文档</a>
+        {% endif %}
+    </div>
+</div>
+
+<!-- 新建目录表单 -->
+{% if current_user.is_authenticated %}
+<div id="mkdir-form" class="move-form mb-3 p-3 border rounded bg-light">
+    <form method="POST" action="/docs/mkdir" class="d-flex gap-2 align-items-end">
+        <input type="hidden" name="parent" value="{{ current_dir }}">
+        <div>
+            <label class="form-label small mb-1">目录名</label>
+            <input type="text" name="dirname" class="form-control form-control-sm" placeholder="例如：tutorials" required style="width: 200px;">
+        </div>
+        <button type="submit" class="btn btn-primary btn-sm">创建</button>
+        <button type="button" class="btn btn-sm btn-outline-secondary" onclick="document.getElementById('mkdir-form').classList.remove('show')">取消</button>
+    </form>
+</div>
+{% endif %}
+
+<!-- 标签筛选 -->
+{% if all_tags %}
+<div class="mb-2">
+    <span class="text-muted small">🏷️ 标签筛选：</span>
+    <a href="/docs{% if current_dir %}?dir={{ current_dir }}{% endif %}" class="tag-badge {% if not current_tag %}active{% endif %}">全部</a>
+    {% for t in all_tags %}
+    <a href="/docs?tag={{ t }}{% if current_dir %}&dir={{ current_dir }}{% endif %}" class="tag-badge {% if current_tag == t %}active{% endif %}">{{ t }}</a>
+    {% endfor %}
+</div>
+{% endif %}
+
+<div class="docs-layout">
+    <!-- 左侧：文档目录树 -->
+    <div class="docs-sidebar">
+        {% if dirs %}
+        <div class="mb-3">
+            <div class="text-muted small mb-1 fw-bold">📁 子目录</div>
+            {% for d in dirs %}
+            <a href="/docs?dir={{ d.rel }}" class="dir-item">
+                📁 {{ d.name }}
+                <span class="badge bg-secondary rounded-pill ms-2">{{ d.count }}</span>
+            </a>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        {% if docs %}
+        <div class="text-muted small mb-1 fw-bold">📄 文档 <span class="fw-normal">({{ docs|length }})</span></div>
+        {% for doc in docs %}
+        <div class="doc-item {% if preview_file == doc.filename %}active{% endif %}">
+            <a href="/docs?file={{ doc.filename }}{% if current_dir %}&dir={{ current_dir }}{% endif %}{% if current_tag %}&tag={{ current_tag }}{% endif %}" class="text-decoration-none text-reset">
+                <span class="doc-title">📄 {{ doc.title }}</span>
+                <span class="doc-meta">🕐 {{ doc.mtime }}</span>
+            </a>
+            {% set doctags = tags_data.get(doc.filename, []) %}
+            {% if doctags %}
+            <div class="doc-tags">
+                {% for t in doctags %}
+                <a href="/docs?tag={{ t }}" class="mini-tag text-decoration-none">{{ t }}</a>
+                {% endfor %}
+            </div>
+            {% endif %}
+            {% if current_user.is_authenticated %}
+            <div class="action-btns mt-1">
+                <button class="btn btn-outline-secondary btn-sm" onclick="showMove('{{ doc.filename }}')" title="移动/重命名">↗️</button>
+                <button class="btn btn-outline-secondary btn-sm" onclick="showTags('{{ doc.filename }}')" title="标签">🏷️</button>
+                <form method="POST" action="/docs/{{ doc.filename }}/delete" style="display:inline" onsubmit="return confirm('确定删除 {{ doc.display }} 吗？此操作不可撤销。')">
+                    <button class="btn btn-outline-danger btn-sm" title="删除">🗑️</button>
+                </form>
+            </div>
+            <!-- 移动表单 -->
+            <div id="move-{{ doc.filename | replace('/', '_') }}" class="move-form mt-2 p-2 border rounded bg-white">
+                <form method="POST" action="/docs/{{ doc.filename }}/move">
+                    <label class="form-label small mb-1">目标目录</label>
+                    <select class="form-select form-select-sm mb-1" id="move-dir-{{ doc.filename | replace('/', '_') }}" onchange="updateMovePath('{{ doc.filename }}', '{{ doc.display }}')">
+                        <option value="">(根目录)</option>
+                    </select>
+                    <label class="form-label small mb-1">新文件名</label>
+                    <input type="text" name="new_name" class="form-control form-control-sm mb-1" id="move-name-{{ doc.filename | replace('/', '_') }}" value="{{ doc.display }}" required>
+                    <div class="text-muted small mb-1">目标路径预览：<code id="move-preview-{{ doc.filename | replace('/', '_') }}">{{ doc.display }}</code></div>
+                    <button type="submit" class="btn btn-primary btn-sm">确认移动</button>
+                    <button type="button" class="btn btn-sm btn-outline-secondary" onclick="hideMove('{{ doc.filename }}')">取消</button>
+                </form>
+            </div>
+            <!-- 标签表单 -->
+            <div id="tags-{{ doc.filename | replace('/', '_') }}" class="move-form mt-2 p-2 border rounded bg-white">
+                <form method="POST" action="/docs/{{ doc.filename }}/tags">
+                    <input type="text" name="tags" class="form-control form-control-sm mb-1" placeholder="标签，逗号分隔" value="{{ doctags | join(', ') }}">
+                    <button type="submit" class="btn btn-primary btn-sm">保存标签</button>
+                    <button type="button" class="btn btn-sm btn-outline-secondary" onclick="hideTags('{{ doc.filename }}')">取消</button>
+                </form>
+            </div>
+            {% endif %}
+        </div>
+        {% endfor %}
+        {% else %}
+        <div class="text-muted text-center py-4">
+            📭 此目录暂无文档
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- 右侧：文档预览 -->
+    <div class="docs-preview">
+        {% if preview_html %}
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h2>{{ preview_title }}</h2>
+            <div>
+                {% if current_user.is_authenticated %}
+                <a href="/docs/{{ preview_file }}/edit" class="btn btn-outline-primary btn-sm">✏️ 编辑</a>
+                {% endif %}
+                <a href="/docs/{{ preview_file }}" class="btn btn-outline-secondary btn-sm">🔗 全屏查看</a>
+            </div>
+        </div>
+        {% if preview_tags %}
+        <div class="mb-3">
+            {% for t in preview_tags %}
+            <span class="tag-badge">{{ t }}</span>
+            {% endfor %}
+        </div>
+        {% endif %}
+        <div class="markdown-body">{{ preview_html|safe }}</div>
+        <div class="mt-3 text-muted"><small>最后修改：{{ preview_mtime }}</small></div>
+        {% else %}
+        <div class="preview-empty">
+            <div class="icon">📖</div>
+            <h5>选择左侧文档进行预览</h5>
+            <p class="text-muted">点击文档列表中的文件即可在此处预览</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+{% block extra_scripts %}
+<script>
+var allDirs = [];
+
+// Fetch directory list on page load
+fetch('/docs/_api/dirs')
+    .then(r => r.json())
+    .then(dirs => {
+        allDirs = dirs;
+        // Populate all move select dropdowns
+        dirs.forEach(d => {
+            document.querySelectorAll('select[id^="move-dir-"]').forEach(sel => {
+                var opt = document.createElement('option');
+                opt.value = d.path;
+                opt.textContent = (d.path || '(根目录)');
+                sel.appendChild(opt);
+            });
+        });
+    });
+
+function updateMovePath(filename, displayName) {
+    var safeId = filename.replace(/\//g, '_');
+    var dirSel = document.getElementById('move-dir-' + safeId);
+    var nameInput = document.getElementById('move-name-' + safeId);
+    var preview = document.getElementById('move-preview-' + safeId);
+    var dir = dirSel.value;
+    var name = nameInput.value || displayName;
+    var path = dir ? dir + '/' + name : name;
+    preview.textContent = path;
+    // Also update the new_name input with full path including .md
+    nameInput.setAttribute('data-full', path);
+}
+
+function showMove(filename) {
+    var el = document.getElementById('move-' + filename.replace(/\//g, '_'));
+    if (el) el.classList.add('show');
+}
+function hideMove(filename) {
+    var el = document.getElementById('move-' + filename.replace(/\//g, '_'));
+    if (el) el.classList.remove('show');
+}
+function showTags(filename) {
+    var el = document.getElementById('tags-' + filename.replace(/\//g, '_'));
+    if (el) el.classList.add('show');
+}
+function hideTags(filename) {
+    var el = document.getElementById('tags-' + filename.replace(/\//g, '_'));
+    if (el) el.classList.remove('show');
+}
+
+// Before submit, construct full path
+document.addEventListener('submit', function(e) {
+    var form = e.target;
+    if (form.action && form.action.indexOf('/move') > -1) {
+        var nameInput = form.querySelector('input[name="new_name"]');
+        if (nameInput && nameInput.getAttribute('data-full')) {
+            nameInput.value = nameInput.getAttribute('data-full') + '.md';
+        }
+    }
+});
+</script>
+{% endblock %}

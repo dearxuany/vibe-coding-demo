@@ -1,0 +1,89 @@
+{% extends "base.html" %}
+{% block title %}编辑 {{ display_name }} - Markdown Docs{% endblock %}
+{% block content %}
+<h1 class="mb-3">✏️ 编辑：{{ display_name }}</h1>
+
+<form method="POST">
+    <div class="mb-3">
+        <textarea name="content" class="form-control font-monospace" rows="22" style="resize: vertical;">{{ content }}</textarea>
+    </div>
+    <div class="d-flex gap-2">
+        <button type="submit" class="btn btn-primary">💾 保存</button>
+        <a href="/docs/{{ filename }}" class="btn btn-secondary">取消</a>
+    </div>
+</form>
+
+<hr class="my-4">
+
+<!-- 移动/重命名 -->
+<h6>↗️ 移动 / 重命名</h6>
+<form method="POST" action="/docs/{{ filename }}/move" class="row g-2 mb-3" onsubmit="buildMovePath(event, '{{ filename }}')">
+    <div class="col-md-4">
+        <label class="form-label small mb-1">目标目录</label>
+        <select class="form-select form-select-sm" id="edit-move-dir"></select>
+    </div>
+    <div class="col-md-4">
+        <label class="form-label small mb-1">新文件名</label>
+        <input type="text" id="edit-move-name" class="form-control form-control-sm" value="{{ display_name }}" required>
+    </div>
+    <div class="col-md-4">
+        <label class="form-label small mb-1">&nbsp;</label>
+        <button type="submit" class="btn btn-outline-secondary btn-sm w-100">移动</button>
+    </div>
+    <div class="col-12">
+        <small class="text-muted">目标路径预览：<code id="edit-move-preview">{{ display_name }}</code></small>
+        <input type="hidden" name="new_name" id="edit-move-full" value="{{ filename }}">
+    </div>
+</form>
+
+<!-- 标签管理 -->
+<h6>🏷️ 标签</h6>
+<form method="POST" action="/docs/{{ filename }}/tags" class="row g-2 mb-3">
+    <div class="col-md-8">
+        <input type="text" name="tags" class="form-control form-control-sm" placeholder="标签，逗号分隔" value="{{ tags_str }}">
+    </div>
+    <div class="col-md-4">
+        <button type="submit" class="btn btn-outline-secondary btn-sm w-100">更新标签</button>
+    </div>
+</form>
+
+<!-- 删除 -->
+<hr>
+<form method="POST" action="/docs/{{ filename }}/delete" onsubmit="return confirm('确定删除 {{ display_name }} 吗？此操作不可撤销。')">
+    <button type="submit" class="btn btn-danger btn-sm">🗑️ 删除此文档</button>
+</form>
+{% endblock %}
+{% block extra_scripts %}
+<script>
+// Populate directory dropdown
+fetch('/docs/_api/dirs')
+    .then(r => r.json())
+    .then(dirs => {
+        var sel = document.getElementById('edit-move-dir');
+        dirs.forEach(d => {
+            var opt = document.createElement('option');
+            opt.value = d.path;
+            opt.textContent = d.path || '(根目录)';
+            sel.appendChild(opt);
+        });
+    });
+
+function buildMovePath(e, filename) {
+    var dir = document.getElementById('edit-move-dir').value;
+    var name = document.getElementById('edit-move-name').value;
+    var path = dir ? dir + '/' + name : name;
+    if (!path.endsWith('.md')) path += '.md';
+    document.getElementById('edit-move-full').value = path;
+}
+
+// Live preview update
+document.getElementById('edit-move-dir').addEventListener('change', updateEditPreview);
+document.getElementById('edit-move-name').addEventListener('input', updateEditPreview);
+function updateEditPreview() {
+    var dir = document.getElementById('edit-move-dir').value;
+    var name = document.getElementById('edit-move-name').value;
+    var path = dir ? dir + '/' + name : name;
+    document.getElementById('edit-move-preview').textContent = path;
+}
+</script>
+{% endblock %}
