@@ -1,6 +1,6 @@
-# Flask Metrics Demo
+# Flask Metrics + Markdown Docs Demo
 
-Flask web 服务示例，通过 `/metrics` 接口暴露 Prometheus 兼容的性能指标。
+Flask Web 应用，集成 Prometheus 指标暴露与 Markdown 文档管理系统。
 
 ## 快速开始
 
@@ -24,7 +24,50 @@ python app.py
 | `/` | GET | 服务信息与接口列表 |
 | `/health` | GET | 健康检查 |
 | `/api/hello?name=xxx` | GET | 示例业务接口 |
+| `/api/docs` | GET | 文档列表（支持认证、子目录、标签过滤） |
+| `/api/docs/<path>` | GET | 文档内容（Markdown 渲染） |
 | `/metrics` | GET | Prometheus 指标（text/plain） |
+
+## Markdown 文档系统
+
+内置 Markdown 文档管理服务，支持以下特性：
+
+- **认证保护**：通过 Token 验证保护文档访问
+- **子目录结构**：按目录层级组织文档，如 `claude/cost/token-cost.md`
+- **标签系统**：通过 `.tags.json` 配置文档标签，支持 `/api/docs?tag=xxx` 过滤
+- **Markdown 渲染**：自动将 Markdown 文件渲染为 HTML 展示
+
+### 文档目录
+
+```
+docs/
+├── example.md                   # 示例文档
+├── .tags.json                   # 标签配置
+└── claude/                      # Claude Code 相关文档
+    ├── README.md
+    ├── Claude Code 常用命令.md
+    ├── cost/                    # Token 成本解析
+    │   ├── token-cost.md
+    │   └── token-cost-saving.md
+    ├── getting-started/         # 入门指南
+    │   ├── quickstart.md
+    │   ├── project-setup.md
+    │   └── prompt-engineering.md
+    ├── settings-config/         # 配置指南
+    │   ├── settings-overview.md
+    │   ├── permissions.md
+    │   └── mcp-servers.md
+    ├── skills-hooks/            # 技能与钩子
+    │   ├── custom-slash-commands.md
+    │   └── hooks-guide.md
+    ├── troubleshooting/         # 问题排查
+    │   ├── common-issues.md
+    │   └── performance.md
+    └── workflows/               # 工作流
+        ├── overview.md
+        ├── code-review.md
+        └── tdd-workflow.md
+```
 
 ## 指标
 
@@ -63,6 +106,10 @@ bin/docker-manage.sh
 ├── bin/
 │   ├── run.sh              # 本地运行脚本
 │   └── docker-manage.sh    # Docker 构建 & 运行脚本
+├── docs/                   # Markdown 文档系统
+│   ├── example.md
+│   ├── .tags.json           # 标签配置
+│   └── claude/             # Claude Code 文档
 ├── flask-metrics-venv/     # Python 虚拟环境
 ├── .claude/                # Claude Code 配置
 ├── .gitignore              # Git 忽略规则
